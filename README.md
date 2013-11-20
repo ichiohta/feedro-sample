@@ -1,6 +1,6 @@
 #feedro
 
-A sample Windows Store App for a forthcoming from gihyo.jp.
+A sample application for a forthcoming book on Windows Store App from gihyo.jp.
 
 Copyright 2012 Tagawa Software Engineering
 
