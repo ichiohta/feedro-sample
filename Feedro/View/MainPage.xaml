@@ -1,0 +1,416 @@
+﻿<Page
+    x:Class="Feedro.View.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:Feedro.ViewModel"
+    xmlns:vc="using:Feedro.View.Converter"
+    xmlns:local="using:Feedro.View"
+    xmlns:an="using:Windows.UI.Xaml.Media.Animation">
+
+    <Page.DataContext>
+        <vm:TimelineViewModel />
+    </Page.DataContext>
+
+    <Page.Transitions>
+        <TransitionCollection>
+            <EntranceThemeTransition />
+        </TransitionCollection>
+    </Page.Transitions>
+
+    <Page.Resources>
+
+        <vc:DateTimePresenter x:Key="DateTimePresenter" />
+        <vc:BooleanInverter x:Key="BooleanInverter" />
+        <vc:BooleanToVisibility x:Key="BooleanToVisibility" />
+
+        <Style x:Key="EntryTitleStyle" TargetType="TextBlock" BasedOn="{StaticResource TitleTextBlockStyle}">
+            <Setter Property="FontSize" Value="26.667"/>
+            <Setter Property="LineHeight" Value="32" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="TextAlignment" Value="Left" />
+        </Style>
+
+        <Style x:Key="EntrySummaryStyle" TargetType="TextBlock" BasedOn="{StaticResource BaseTextBlockStyle}">
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="LineHeight" Value="30" />
+            <Setter Property="TextAlignment" Value="Left" />
+        </Style>
+
+    </Page.Resources>
+
+    <Grid Background="{ThemeResource  ApplicationPageBackgroundThemeBrush}">
+
+        <!-- Global progress ring -->
+        <ProgressRing IsActive="{Binding IsUpdating}" Width="100" Height="100"/>
+        
+        <!-- LandScape & Fill -->
+        <Grid x:Name="LandscapeView">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="120" />
+                <ColumnDefinition Width="320" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="120" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Page header -->
+            <Image Grid.Column="1" Grid.Row="0"
+                   Source="/Assets/feedro.png"
+                   Height="60"
+                   Margin="10,0,20,0"
+                   HorizontalAlignment="Left" />
+
+            <!-- Search box -->
+            <SearchBox x:Uid="SearchBox"
+                       Grid.Column="2"
+                       Grid.Row="0"
+                       Width="320" Height="40" Margin="10,0,40,30"
+                       HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                       SearchHistoryEnabled="True" 
+                       QuerySubmitted="SearchBox_QuerySubmitted" />
+
+            <!-- Entry list -->
+            <ListView Grid.Column="1" Grid.Row="1"
+                      ItemsSource="{Binding Entries}"
+                      SelectedValue="{Binding SelectedEntry, Mode=TwoWay}"
+                      Width="320"
+                      Margin="0,0,0,0">
+
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+
+                        <Grid>
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="240" />
+                            </Grid.ColumnDefinitions>
+
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Column="0" 
+                                        Orientation="Vertical">
+
+                                <Image VerticalAlignment="Top"
+                                       Source="{Binding Subscription.FaviconUri}"
+                                       Stretch="UniformToFill"
+                                       Width="20"
+                                       Height="20"
+                                       Margin="10"/>
+
+                                <Image VerticalAlignment="Top"
+                                       Source="/Assets/Favored.png"
+                                       Stretch="UniformToFill"
+                                       Visibility="{Binding IsFavorite, Converter={StaticResource BooleanToVisibility}}"
+                                       Width="20"
+                                       Height="20"
+                                       Margin="10,0,10,0" />
+
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1"
+                                    Orientation="Vertical"
+                                    VerticalAlignment="Top">
+
+                                <TextBlock Text="{Binding Title}"
+                                       Style="{StaticResource TitleTextBlockStyle}"
+                                       Margin="0,0,0,10"
+                                       MaxHeight="40"/>
+
+                                <TextBlock Text="{Binding FormattedSummary}"
+                                       Style="{StaticResource BaseTextBlockStyle}"
+                                       MaxHeight="60"/>
+
+                                <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Top"
+                                        Margin="0,0,0,10">
+
+                                    <TextBlock Text="{Binding Subscription.Title}"
+                                           Width="160"
+                                           TextWrapping="NoWrap"
+                                           Style="{StaticResource CaptionTextBlockStyle}" />
+
+                                    <TextBlock Text="{Binding DateTimePosted, Converter={StaticResource DateTimePresenter}}"
+                                           Width="80"
+                                           TextAlignment="Right"
+                                           TextWrapping="NoWrap"
+                                           Style="{StaticResource CaptionTextBlockStyle}" />
+
+                                </StackPanel>
+
+                            </StackPanel>
+
+                        </Grid>
+
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+
+            </ListView>
+
+            <!-- Browser pane -->
+            <Grid Grid.Column="2" Grid.Row="1"
+                  Margin="40"
+                  Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibility}}">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
+
+                <Image Grid.Column="0" Grid.Row="0"
+                       Source="{Binding SelectedEntry.Subscription.FaviconUri}"
+                       Stretch="UniformToFill"
+                       Width="40"
+                       Height="40"
+                       Margin="10,20,10,20" />
+
+                <TextBlock Grid.Column="1" Grid.Row="0"
+                           Text="{Binding SelectedEntry.Title}"
+                           Style="{StaticResource EntryTitleStyle}"
+                           MaxWidth="740"
+                           MaxHeight="80"
+                           Margin="0,20,0,20" HorizontalAlignment="Left"/>
+
+                <Border Grid.Column="1" Grid.Row="1"
+                        HorizontalAlignment="Left"
+                        Width="auto"
+                        Tapped="Browse_OnClick"
+                        Background="{ThemeResource ListViewItemPlaceholderBackgroundThemeBrush}">
+                    <TextBlock
+                           HorizontalAlignment="Left"
+                           Text="{Binding SelectedEntry.FormattedSummary}"
+                           Style="{StaticResource EntrySummaryStyle}"
+                           TextWrapping="Wrap"
+                           MaxWidth="680"
+                           Margin="20,10,20,20"
+                           MaxHeight="400"/>
+                </Border>
+
+                <StackPanel Grid.Column="1" Grid.Row="2"
+                            Margin="0,0,10,10"
+                            Orientation="Horizontal">
+                    <TextBlock Width="600"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Text="{Binding SelectedEntry.Subscription.Title}" />
+                    <TextBlock Width="120"
+                               TextAlignment="Right"
+                               HorizontalAlignment="Right"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Text="{Binding SelectedEntry.DateTimePosted, Converter={StaticResource DateTimePresenter}, ConverterParameter='shortdate shorttime'}" />
+                </StackPanel>
+
+            </Grid>
+            
+        </Grid>
+
+        <!-- Portrait -->
+        <Grid x:Name="PortraitView"
+              Visibility="Collapsed">
+
+            <Grid HorizontalAlignment="Left">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Entry list -->
+                <ListView
+                      ItemsSource="{Binding Entries}"
+                      SelectedValue="{Binding SelectedEntry, Mode=TwoWay}"
+                      Margin="0,20,0,0">
+
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+
+                            <Grid>
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" 
+                                        Orientation="Vertical">
+
+                                    <Image VerticalAlignment="Top"
+                                       Source="{Binding Subscription.FaviconUri}"
+                                       Stretch="UniformToFill"
+                                       Width="20"
+                                       Height="20"
+                                       Margin="10"/>
+
+                                    <Image VerticalAlignment="Top"
+                                       Source="/Assets/Favored.png"
+                                       Stretch="UniformToFill"
+                                       Visibility="{Binding IsFavorite, Converter={StaticResource BooleanToVisibility}}"
+                                       Width="20"
+                                       Height="20"
+                                       Margin="10,0,10,0" />
+
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Vertical"
+                                            VerticalAlignment="Top">
+
+                                    <TextBlock Text="{Binding Title}"
+                                               Style="{StaticResource TitleTextBlockStyle}"
+                                               Margin="0,0,0,10"
+                                               MaxHeight="40" />
+
+                                    <TextBlock Text="{Binding FormattedSummary}"
+                                               Style="{StaticResource BaseTextBlockStyle}"
+                                               MaxHeight="120" />
+
+                                    <Grid Margin="10">
+
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Subscription.Title}"
+                                                   TextWrapping="NoWrap"
+                                                   Style="{StaticResource CaptionTextBlockStyle}" />
+
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding DateTimePosted, Converter={StaticResource DateTimePresenter}}"
+                                                   Width="80"
+                                                   TextAlignment="Right"
+                                                   TextWrapping="NoWrap"
+                                                   Style="{StaticResource CaptionTextBlockStyle}" />
+
+                                    </Grid>
+
+                                </StackPanel>
+
+                            </Grid>
+
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+
+                </ListView>
+
+            </Grid>
+
+        </Grid>
+        
+        <!-- Snapped -->
+        <Grid x:Name="SnappedView" Visibility="Collapsed">
+
+            <Grid HorizontalAlignment="Left">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Entry list -->
+                <ListView
+                      ItemsSource="{Binding Entries}"
+                      SelectedValue="{Binding SelectedEntry, Mode=TwoWay}"
+                      Margin="0,20,0,0">
+
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+
+                            <Grid MinHeight="60">
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" 
+                                        Orientation="Vertical">
+
+                                    <Image VerticalAlignment="Top"
+                                       Source="{Binding Subscription.FaviconUri}"
+                                       Stretch="UniformToFill"
+                                       Width="20"
+                                       Height="20"
+                                       Margin="10,5,10,5"/>
+
+                                    <Image VerticalAlignment="Top"
+                                       Source="/Assets/Favored.png"
+                                       Stretch="UniformToFill"
+                                       Visibility="{Binding IsFavorite, Converter={StaticResource BooleanToVisibility}}"
+                                       Width="20"
+                                       Height="20"
+                                       Margin="10,0,10,0" />
+
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Vertical"
+                                            VerticalAlignment="Top">
+
+                                    <TextBlock Text="{Binding Title}"
+                                               Style="{StaticResource TitleTextBlockStyle}"
+                                               Margin="0,0,0,10" />
+
+                                    <Grid Margin="0,0,0,10">
+
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Subscription.Title}"
+                                                   TextWrapping="NoWrap"
+                                                   Style="{StaticResource CaptionTextBlockStyle}" />
+
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding DateTimePosted, Converter={StaticResource DateTimePresenter}}"
+                                                   Width="80"
+                                                   TextAlignment="Right"
+                                                   TextWrapping="NoWrap"
+                                                   Style="{StaticResource CaptionTextBlockStyle}" />
+
+                                    </Grid>
+
+                                </StackPanel>
+
+                            </Grid>
+
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+
+                </ListView>
+
+            </Grid>
+
+        </Grid>
+
+    </Grid>
+
+    <Page.BottomAppBar>
+        <CommandBar x:Name="AppBar">
+            <AppBarButton x:Uid="AppBarRefresh" Icon="Refresh"
+                                  IsEnabled="{Binding IsUpdating, Converter={StaticResource BooleanInverter}}"
+                                  Click="Refresh_OnClick"/>
+            <CommandBar.SecondaryCommands>
+                <AppBarButton x:Uid="AppBarFavorite" Icon="Favorite"
+                            Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibility}}"
+                            Click="Favorite_OnClick"/>
+                <AppBarButton x:Uid="AppBarWorld" Icon="Globe"
+                            Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibility}}"
+                            Click="Browse_OnClick"/>
+            </CommandBar.SecondaryCommands>
+        </CommandBar>
+    </Page.BottomAppBar>
+
+</Page>
