@@ -16,36 +16,19 @@ namespace Feedro.Model.Helper
             }
         }
 
-        public static  async Task<T> Deserialize<T>(string label, Func<T> defaultValueGenerator, int numberOfRetry = 3)
+        public static  async Task<T> Deserialize<T>(string label, Func<T> defaultValueGenerator)
         {
-            const int retryInterval  = 100;
-            Exception innerException = null;
-
-            do
+            try
             {
-                try
+                using (var stream = await ApplicationData.Current.LocalFolder.OpenStreamForReadAsync(label))
                 {
-                    using (var stream = await ApplicationData.Current.LocalFolder.OpenStreamForReadAsync(label))
-                    {
-                        return (T)(new DataContractSerializer(typeof(T)).ReadObject(stream));
-                    }
+                    return (T)(new DataContractSerializer(typeof(T)).ReadObject(stream));
                 }
-                catch (FileNotFoundException)
-                {
-                    return defaultValueGenerator();
-                }
-                catch (UnauthorizedAccessException e)
-                {
-                    innerException = e;
-                }
-
-                await Task.Delay(retryInterval);
             }
-            while (numberOfRetry-- > 0);
-
-            throw new IOException(
-                string.Format("Unable to open file '{0}'", label),
-                innerException);
+            catch (FileNotFoundException)
+            {
+                return defaultValueGenerator();
+            }
         }
     }
 }
